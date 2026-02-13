@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
-<head <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:;">>
+<head>
   <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; child-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none';">
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Omega | Admin Password Tool</title>
   <style>
@@ -177,7 +178,7 @@
 
     @media(max-width: 800px) {
       .app-container { grid-template-columns: 1fr; height: 100vh; border-radius: 0; }
-      .sidebar { display: none; } /* Hide history on mobile for simplicity */
+      .sidebar { display: none; }
     }
   </style>
 </head>
@@ -187,7 +188,7 @@
     
     <main class="main-panel">
       <header class="header">
-        <div class="logo">OMEGA PASSWORD GENERATOR</div>
+        <div class="logo">OMEGA // GENERATOR</div>
         <button id="themeToggle" style="background:none; border:none; cursor:pointer; color:var(--text);">
            </button>
       </header>
@@ -225,7 +226,7 @@
             <input type="checkbox" id="chkSym" checked> Symbols
           </label>
           <label class="checkbox-btn">
-             <input type="checkbox" checked disabled> No Ambiguous
+            <input type="checkbox" checked disabled> No Ambiguous
           </label>
         </div>
       </div>
@@ -257,7 +258,6 @@
 
   <script>
     // --- Data & Config ---
-    // AMBIGUOUS CHARACTERS REMOVED (I, l, 1, O, 0)
     const CHARS = {
       lower: 'abcdefghijkmnpqrstuvwxyz',
       upper: 'ABCDEFGHJKLMNPQRSTUVWXYZ',
@@ -321,7 +321,6 @@
       els.phonetic.innerHTML = pass.split('').map(char => {
         const lower = char.toLowerCase();
         let word = PHONETIC[lower] || char;
-        // Highlight Uppercase vs Lowercase in phonetic view?
         if (/[A-Z]/.test(char)) word = word.toUpperCase(); 
         return `<span class="phonetic-word">${word}</span>`;
       }).join(' ');
@@ -330,7 +329,7 @@
     function addToHistory(pass) {
       const timestamp = new Date().toLocaleString();
       historyData.unshift({ pass, timestamp });
-      if (historyData.length > 50) historyData.pop(); // Cap at 50
+      if (historyData.length > 50) historyData.pop(); 
       renderHistory();
     }
 
@@ -360,31 +359,43 @@
       if(!text) text = els.out.textContent;
       navigator.clipboard.writeText(text).then(() => {
         showToast('Copied! Clipboard clears in 60s');
-        
-        // Auto-Wipe Feature
         setTimeout(() => {
-          navigator.clipboard.writeText(' '); // Overwrite with empty space
-          // Ideally we'd notify user "Clipboard cleared" but that might be annoying
+          navigator.clipboard.writeText(' ');
         }, 60000);
       });
     }
 
-    // 2. CSV Export
+    // 2. FIXED CSV Export (Uses Blob instead of Data URI)
     function exportHistory() {
       if (historyData.length === 0) return;
       
-      let csvContent = "data:text/csv;charset=utf-8,Timestamp,Password\n";
+      // Header
+      let csvContent = "Timestamp,Password\n";
+      
+      // Rows
       historyData.forEach(row => {
-        csvContent += `${row.timestamp},"${row.pass}"\n`; // Quote password to handle symbols
+        // Escape quotes inside passwords by doubling them: " -> ""
+        let safePass = row.pass.replace(/"/g, '""');
+        // Wrap password in quotes to handle commas/newlines/hashes
+        csvContent += `${row.timestamp},"${safePass}"\n`;
       });
 
-      const encodedUri = encodeURI(csvContent);
+      // Create a Blob (Binary Large Object)
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      
+      // Create a link to the Blob
+      const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", "password_history_omega.csv");
+      link.setAttribute("href", url);
+      link.setAttribute("download", "omega_password_history.csv");
       document.body.appendChild(link);
+      
+      // Trigger download
       link.click();
+      
+      // Cleanup
       document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     }
 
     function clearHistory() {
@@ -418,7 +429,7 @@
     }
     els.themeBtn.addEventListener('click', () => { isDark = !isDark; updateTheme(); });
     updateTheme();
-    generate(); // Start
+    generate(); 
   </script>
 </body>
 </html>
