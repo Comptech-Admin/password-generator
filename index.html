@@ -3,339 +3,422 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Clean Password Generator</title>
+  <title>Omega | Admin Password Tool</title>
   <style>
-    /* --- Base + Reset --- */
-    *, *::before, *::after { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0;
-      font-family: "Segoe UI", Calibri, system-ui, -apple-system, Roboto, Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      transition: background 0.3s ease, color 0.3s ease;
-    }
-    button, input, select, textarea { font: inherit; }
-
     :root {
-      /* Light theme */
-      --bg: #f5f7fb;
-      --card-bg: #ffffff;
+      --bg: #f1f5f9;
+      --surface: #ffffff;
       --text: #0f172a;
       --muted: #64748b;
-      --primary: #6366f1;
-      --primary-hover: #4f46e5;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --accent: #06b6d4;
       --border: #e2e8f0;
-      --input-bg: #f1f5f9;
-      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      --success: #10b981;
       --danger: #ef4444;
-      --success: #22c55e;
-      --warning: #eab308;
+      --radius: 12px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
+
     :root[data-theme="dark"] {
       --bg: #0f172a;
-      --card-bg: #1e293b;
-      --text: #f1f5f9;
+      --surface: #1e293b;
+      --text: #f8fafc;
       --muted: #94a3b8;
-      --primary: #818cf8;
-      --primary-hover: #6366f1;
+      --primary: #3b82f6;
+      --primary-hover: #60a5fa;
       --border: #334155;
-      --input-bg: #0f172a;
-      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
     }
 
-    .wrap { max-width: 600px; margin: 0 auto; padding: 2rem 1.5rem; width: 100%; flex: 1; display: flex; flex-direction: column; justify-content: center; }
-
-    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
-    .title { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.025em; }
-
-    /* Theme Toggle */
-    .theme-toggle {
-      background: transparent; border: 1px solid var(--border);
-      color: var(--muted); border-radius: 99px; padding: 8px;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s;
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: background 0.3s;
     }
-    .theme-toggle:hover { color: var(--text); border-color: var(--text); background: var(--input-bg); }
-    .theme-toggle svg { width: 20px; height: 20px; stroke-width: 2; }
 
-    /* Card */
-    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 1.5rem; padding: 2rem; box-shadow: var(--shadow); }
+    .app-container {
+      width: 100%;
+      max-width: 1100px;
+      height: 85vh;
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-columns: 1fr 350px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
 
-    /* Output Area */
-    .output-container { position: relative; margin-bottom: 1.5rem; }
-    .password-display {
-      width: 100%; font-family: 'Courier New', Courier, monospace;
-      font-size: 2rem; font-weight: 700; padding: 1.5rem;
-      border: 2px solid var(--border); background: var(--input-bg);
-      color: var(--primary); border-radius: 1rem; text-align: center;
-      word-break: break-all; min-height: 86px; display: flex; align-items: center; justify-content: center;
+    /* --- Left: Main Generator --- */
+    .main-panel {
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+    .logo { font-size: 1.5rem; font-weight: 800; color: var(--primary); letter-spacing: -1px; }
+
+    .display-box {
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 30px;
+      text-align: center;
+      position: relative;
+      margin-bottom: 20px;
       transition: border-color 0.2s;
     }
-    .password-display:focus { outline: none; border-color: var(--primary); }
+    .display-box:focus-within { border-color: var(--primary); }
     
-    /* Strength Bar */
-    .strength-meter { height: 4px; background: var(--border); margin-top: 10px; border-radius: 2px; overflow: hidden; display: flex; }
-    .strength-bar { height: 100%; width: 0%; transition: width 0.3s ease, background-color 0.3s ease; }
+    .password-text {
+      font-family: 'Courier New', monospace;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--text);
+      word-break: break-all;
+    }
+
+    /* Phonetic Section */
+    .phonetic-box {
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+    .phonetic-label { font-size: 0.75rem; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-bottom: 8px; display: block; }
+    .phonetic-text { 
+      font-family: monospace; color: var(--muted); line-height: 1.6; font-size: 0.9rem; 
+    }
+    .phonetic-word { display: inline-block; padding: 2px 4px; background: var(--bg); border-radius: 4px; margin: 2px; }
 
     /* Controls */
-    .controls { display: grid; gap: 1.5rem; margin-bottom: 2rem; }
+    .controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: auto; }
     
-    .control-group { display: flex; flex-direction: column; gap: 0.5rem; }
-    .label-row { display: flex; justify-content: space-between; font-weight: 600; font-size: 0.9rem; color: var(--muted); }
+    .control-row { margin-bottom: 15px; }
+    .label-flex { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; }
     
-    /* Range Slider */
-    input[type=range] { width: 100%; accent-color: var(--primary); cursor: pointer; height: 6px; }
+    input[type="range"] { width: 100%; accent-color: var(--primary); cursor: pointer; }
 
-    /* Checkboxes grid */
-    .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .checkbox-label {
-      display: flex; align-items: center; gap: 0.75rem; cursor: pointer;
-      font-weight: 600; font-size: 0.95rem; user-select: none;
-      padding: 0.5rem; border-radius: 0.5rem; transition: background 0.2s;
+    .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .checkbox-btn {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px; border: 1px solid var(--border);
+      border-radius: 8px; cursor: pointer; font-size: 0.9rem;
+      transition: background 0.2s;
     }
-    .checkbox-label:hover { background: var(--input-bg); }
-    input[type="checkbox"] {
-      width: 1.25rem; height: 1.25rem; accent-color: var(--primary);
-      border-radius: 4px; cursor: pointer;
+    .checkbox-btn:hover { background: var(--bg); }
+    input[type="checkbox"] { accent-color: var(--primary); width: 16px; height: 16px; }
+
+    .btn-large {
+      background: var(--primary); color: white;
+      border: none; border-radius: 8px;
+      padding: 15px; font-size: 1.1rem; font-weight: 700;
+      width: 100%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: background 0.2s;
+    }
+    .btn-large:hover { background: var(--primary-hover); }
+
+    /* --- Right: History & Tools --- */
+    .sidebar {
+      background: var(--bg);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
     }
 
-    /* Actions */
-    .actions { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; }
+    .sidebar-header { font-weight: 700; color: var(--muted); margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+
+    .history-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px; }
     
-    .btn {
-      border: none; border-radius: 0.75rem; padding: 1rem;
-      font-weight: 700; font-size: 1rem; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-      transition: transform 0.1s, opacity 0.2s;
+    .history-card {
+      background: var(--surface);
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
     }
-    .btn:active { transform: scale(0.98); }
-    .btn svg { width: 20px; height: 20px; }
+    .history-card:hover { border-color: var(--primary); transform: translateX(-2px); }
+    .h-pass { font-family: monospace; font-weight: 600; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .h-meta { font-size: 0.75rem; color: var(--muted); margin-top: 5px; display: flex; justify-content: space-between; }
 
-    .btn-primary { background: var(--primary); color: white; }
-    .btn-primary:hover { background: var(--primary-hover); }
-    
-    .btn-secondary { background: var(--input-bg); color: var(--text); }
-    .btn-secondary:hover { filter: brightness(0.95); }
+    .sidebar-actions { margin-top: 20px; display: flex; gap: 10px; }
+    .btn-small {
+      flex: 1; padding: 10px; border: 1px solid var(--border);
+      background: var(--surface); border-radius: 6px; cursor: pointer;
+      font-size: 0.85rem; font-weight: 600; color: var(--text);
+      display: flex; justify-content: center; align-items: center; gap: 6px;
+    }
+    .btn-small:hover { background: var(--border); }
 
-    footer { text-align: center; padding: 1rem; color: var(--muted); font-size: 0.85rem; }
+    .theme-switch {
+      position: absolute; top: 20px; right: 20px;
+    }
 
-    /* Toast Notification */
+    /* Toast */
     .toast {
-      position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(20px);
-      background: var(--text); color: var(--bg); padding: 0.75rem 1.5rem;
-      border-radius: 99px; font-weight: 600; opacity: 0; visibility: hidden;
-      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-      z-index: 100; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(50px);
+      background: var(--text); color: var(--bg); padding: 10px 20px;
+      border-radius: 50px; opacity: 0; transition: all 0.3s; pointer-events: none;
     }
-    .toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    @media (max-width: 480px) {
-      .options-grid { grid-template-columns: 1fr; }
-      .actions { grid-template-columns: 1fr; }
+    @media(max-width: 800px) {
+      .app-container { grid-template-columns: 1fr; height: 100vh; border-radius: 0; }
+      .sidebar { display: none; } /* Hide history on mobile for simplicity */
     }
   </style>
 </head>
 <body>
 
-  <div class="wrap">
-    <header>
-      <div class="title">Password Generator</div>
-      <button class="theme-toggle" id="themeToggle" aria-label="Toggle Theme">
-        </button>
-    </header>
-
-    <main class="card">
-      
-      <div class="output-container">
-        <div class="password-display" id="passwordOutput" tabindex="0">
-          CLICK GENERATE
-        </div>
-        <div class="strength-meter">
-          <div class="strength-bar" id="strengthBar"></div>
-        </div>
-      </div>
-
-      <div class="controls">
-        
-        <div class="control-group">
-          <div class="label-row">
-            <label for="lengthRange">Password Length</label>
-            <span id="lengthValue">16</span>
-          </div>
-          <input type="range" id="lengthRange" min="6" max="64" value="16">
-        </div>
-
-        <div class="options-grid">
-          <label class="checkbox-label">
-            <input type="checkbox" id="incUpper" checked> Uppercase (No I, O)
-          </label>
-          <label class="checkbox-label">
-            <input type="checkbox" id="incLower" checked> Lowercase (No l)
-          </label>
-          <label class="checkbox-label">
-            <input type="checkbox" id="incNumbers" checked> Numbers (No 0, 1)
-          </label>
-          <label class="checkbox-label">
-            <input type="checkbox" id="incSymbols" checked> Symbols (!@#$)
-          </label>
-        </div>
-      </div>
-
-      <div class="actions">
-        <button id="btnGenerate" class="btn btn-primary">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-          Generate New
-        </button>
-        <button id="btnCopy" class="btn btn-secondary">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-          Copy
-        </button>
-      </div>
-
-    </main>
+  <div class="app-container">
     
-    <footer>Secure • Ambiguity Free • Fast</footer>
+    <main class="main-panel">
+      <header class="header">
+        <div class="logo">OMEGA // GENERATOR</div>
+        <button id="themeToggle" style="background:none; border:none; cursor:pointer; color:var(--text);">
+           </button>
+      </header>
+
+      <div class="display-box">
+        <div class="password-text" id="output">Loading...</div>
+      </div>
+
+      <div class="phonetic-box">
+        <span class="phonetic-label">Phone Readout (NATO)</span>
+        <div class="phonetic-text" id="phoneticOutput">
+          </div>
+      </div>
+
+      <div class="controls-grid">
+        <div>
+          <div class="control-row">
+            <div class="label-flex"><span>Length</span> <span id="lenVal">16</span></div>
+            <input type="range" id="lenRange" min="8" max="64" value="16">
+          </div>
+          <button class="btn-large" id="btnGen">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+            Generate New
+          </button>
+        </div>
+
+        <div class="checkbox-group">
+          <label class="checkbox-btn">
+            <input type="checkbox" id="chkUpper" checked> Uppercase
+          </label>
+          <label class="checkbox-btn">
+            <input type="checkbox" id="chkNum" checked> Numbers
+          </label>
+          <label class="checkbox-btn">
+            <input type="checkbox" id="chkSym" checked> Symbols
+          </label>
+          <label class="checkbox-btn">
+             <input type="checkbox" checked disabled> No Ambiguous
+          </label>
+        </div>
+      </div>
+    </main>
+
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span>SESSION HISTORY</span>
+        <span id="historyCount" style="font-size:0.8rem; background:var(--border); padding:2px 6px; border-radius:4px;">0</span>
+      </div>
+      
+      <div class="history-list" id="historyList">
+        </div>
+
+      <div class="sidebar-actions">
+        <button class="btn-small" id="btnExport">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export CSV
+        </button>
+        <button class="btn-small" onclick="clearHistory()" style="color:var(--danger); border-color:var(--border);">
+          Clear
+        </button>
+      </div>
+    </aside>
+
   </div>
 
-  <div class="toast" id="toast">Password copied to clipboard</div>
+  <div class="toast" id="toast">Copied! Clipboard clears in 60s.</div>
 
   <script>
-    (function() {
-      // DOM Elements
-      const els = {
-        output: document.getElementById('passwordOutput'),
-        lengthRange: document.getElementById('lengthRange'),
-        lengthValue: document.getElementById('lengthValue'),
-        incUpper: document.getElementById('incUpper'),
-        incLower: document.getElementById('incLower'),
-        incNumbers: document.getElementById('incNumbers'),
-        incSymbols: document.getElementById('incSymbols'),
-        btnGenerate: document.getElementById('btnGenerate'),
-        btnCopy: document.getElementById('btnCopy'),
-        strengthBar: document.getElementById('strengthBar'),
-        toast: document.getElementById('toast'),
-        themeToggle: document.getElementById('themeToggle')
-      };
+    // --- Data & Config ---
+    // AMBIGUOUS CHARACTERS REMOVED (I, l, 1, O, 0)
+    const CHARS = {
+      lower: 'abcdefghijkmnpqrstuvwxyz',
+      upper: 'ABCDEFGHJKLMNPQRSTUVWXYZ',
+      num: '23456789',
+      sym: '!@#$%^&*()_+-='
+    };
 
-      // Character Sets (Already stripped of I, O, l, 0, 1)
-      const CHARS = {
-        upper: 'ABCDEFGHJKLMNPQRSTUVWXYZ',
-        lower: 'abcdefghijkmnpqrstuvwxyz', 
-        numbers: '23456789',
-        symbols: '!@#$%^&*()_+~`|}{[]:;?><,./-='
-      };
+    const PHONETIC = {
+      'a': 'alpha', 'b': 'bravo', 'c': 'charlie', 'd': 'delta', 'e': 'echo', 'f': 'foxtrot',
+      'g': 'golf', 'h': 'hotel', 'i': 'india', 'j': 'juliett', 'k': 'kilo', 'l': 'lima',
+      'm': 'mike', 'n': 'november', 'o': 'oscar', 'p': 'papa', 'q': 'quebec', 'r': 'romeo',
+      's': 'sierra', 't': 'tango', 'u': 'uniform', 'v': 'victor', 'w': 'whiskey', 'x': 'x-ray',
+      'y': 'yankee', 'z': 'zulu', '0': 'zero', '1': 'one', '2': 'two', '3': 'three', '4': 'four',
+      '5': 'five', '6': 'six', '7': 'seven', '8': 'eight', '9': 'nine',
+      '!': 'bang', '@': 'at', '#': 'hash', '$': 'dollar', '%': 'percent', '^': 'caret',
+      '&': 'ampersand', '*': 'star', '(': 'open-paren', ')': 'close-paren', '-': 'dash',
+      '_': 'underscore', '+': 'plus', '=': 'equals'
+    };
 
-      // --- Theme Logic ---
-      function initTheme() {
-        const saved = localStorage.getItem('theme');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const isDark = saved === 'dark' || (!saved && prefersDark);
-        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-        updateThemeIcon(isDark);
+    let historyData = [];
+
+    // --- DOM Elements ---
+    const els = {
+      out: document.getElementById('output'),
+      phonetic: document.getElementById('phoneticOutput'),
+      lenRange: document.getElementById('lenRange'),
+      lenVal: document.getElementById('lenVal'),
+      history: document.getElementById('historyList'),
+      historyCount: document.getElementById('historyCount'),
+      btnGen: document.getElementById('btnGen'),
+      btnExport: document.getElementById('btnExport'),
+      toast: document.getElementById('toast'),
+      themeBtn: document.getElementById('themeToggle')
+    };
+
+    // --- Core Logic ---
+    function generate() {
+      const len = parseInt(els.lenRange.value);
+      let pool = CHARS.lower;
+      
+      if (document.getElementById('chkUpper').checked) pool += CHARS.upper;
+      if (document.getElementById('chkNum').checked) pool += CHARS.num;
+      if (document.getElementById('chkSym').checked) pool += CHARS.sym;
+
+      const arr = new Uint32Array(len);
+      window.crypto.getRandomValues(arr);
+      
+      let pass = '';
+      for (let i = 0; i < len; i++) {
+        pass += pool[arr[i] % pool.length];
       }
 
-      function toggleTheme() {
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        const newTheme = isDark ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        updateThemeIcon(!isDark);
-      }
+      updateUI(pass);
+      addToHistory(pass);
+    }
 
-      function updateThemeIcon(isDark) {
-        els.themeToggle.innerHTML = isDark 
-          ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>'
-          : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
-      }
+    function updateUI(pass) {
+      els.out.textContent = pass;
+      
+      // Update Phonetic Speller
+      els.phonetic.innerHTML = pass.split('').map(char => {
+        const lower = char.toLowerCase();
+        let word = PHONETIC[lower] || char;
+        // Highlight Uppercase vs Lowercase in phonetic view?
+        if (/[A-Z]/.test(char)) word = word.toUpperCase(); 
+        return `<span class="phonetic-word">${word}</span>`;
+      }).join(' ');
+    }
 
-      // --- Core Logic ---
-      function getPool() {
-        let pool = '';
-        if (els.incUpper.checked) pool += CHARS.upper;
-        if (els.incLower.checked) pool += CHARS.lower;
-        if (els.incNumbers.checked) pool += CHARS.numbers;
-        if (els.incSymbols.checked) pool += CHARS.symbols;
-        return pool;
-      }
+    function addToHistory(pass) {
+      const timestamp = new Date().toLocaleString();
+      historyData.unshift({ pass, timestamp });
+      if (historyData.length > 50) historyData.pop(); // Cap at 50
+      renderHistory();
+    }
 
-      function generatePassword() {
-        const length = parseInt(els.lengthRange.value);
-        const pool = getPool();
+    function renderHistory() {
+      els.historyCount.textContent = historyData.length;
+      els.history.innerHTML = '';
+      
+      historyData.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'history-card';
+        div.innerHTML = `
+          <div class="h-pass">${item.pass}</div>
+          <div class="h-meta">
+            <span>${item.timestamp.split(',')[1]}</span>
+            <span>Copy</span>
+          </div>
+        `;
+        div.onclick = () => copyToClipboard(item.pass);
+        els.history.appendChild(div);
+      });
+    }
 
-        if (!pool) {
-          els.output.textContent = 'SELECT OPTIONS';
-          els.strengthBar.style.width = '0%';
-          return;
-        }
+    // --- Features ---
 
-        let password = '';
-        const array = new Uint32Array(length);
-        window.crypto.getRandomValues(array);
-
-        for (let i = 0; i < length; i++) {
-          password += pool[array[i] % pool.length];
-        }
-
-        els.output.textContent = password;
-        calculateStrength(password, pool.length);
+    // 1. Smart Clipboard
+    function copyToClipboard(text) {
+      if(!text) text = els.out.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Copied! Clipboard clears in 60s');
         
-        els.btnCopy.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy';
-      }
+        // Auto-Wipe Feature
+        setTimeout(() => {
+          navigator.clipboard.writeText(' '); // Overwrite with empty space
+          // Ideally we'd notify user "Clipboard cleared" but that might be annoying
+        }, 60000);
+      });
+    }
 
-      function calculateStrength(password, poolSize) {
-        // Entropy calc: Length * log2(poolSize)
-        const entropy = password.length * Math.log2(poolSize);
-        let strength = 0; 
-        let color = 'var(--danger)';
-
-        if (entropy > 120) { strength = 100; color = 'var(--success)'; }
-        else if (entropy > 80) { strength = 75; color = 'var(--success)'; }
-        else if (entropy > 50) { strength = 50; color = 'var(--warning)'; }
-        else { strength = 25; color = 'var(--danger)'; }
-
-        els.strengthBar.style.width = `${strength}%`;
-        els.strengthBar.style.backgroundColor = color;
-      }
-
-      function copyToClipboard() {
-        const text = els.output.textContent;
-        if (!text || text === 'CLICK GENERATE' || text === 'SELECT OPTIONS') return;
-
-        navigator.clipboard.writeText(text).then(() => {
-          showToast();
-          els.btnCopy.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
-        });
-      }
-
-      function showToast() {
-        els.toast.classList.add('show');
-        setTimeout(() => els.toast.classList.remove('show'), 2000);
-      }
-
-      // --- Event Listeners ---
-      els.lengthRange.addEventListener('input', (e) => {
-        els.lengthValue.textContent = e.target.value;
-        generatePassword();
+    // 2. CSV Export
+    function exportHistory() {
+      if (historyData.length === 0) return;
+      
+      let csvContent = "data:text/csv;charset=utf-8,Timestamp,Password\n";
+      historyData.forEach(row => {
+        csvContent += `${row.timestamp},"${row.pass}"\n`; // Quote password to handle symbols
       });
 
-      [els.incUpper, els.incLower, els.incNumbers, els.incSymbols].forEach(el => {
-        el.addEventListener('change', generatePassword);
-      });
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "password_history_omega.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
 
-      els.btnGenerate.addEventListener('click', generatePassword);
-      els.btnCopy.addEventListener('click', copyToClipboard);
-      els.themeToggle.addEventListener('click', toggleTheme);
+    function clearHistory() {
+      historyData = [];
+      renderHistory();
+    }
 
-      // --- Init ---
-      initTheme();
-      generatePassword();
-    })();
+    function showToast(msg) {
+      els.toast.textContent = msg;
+      els.toast.classList.add('show');
+      setTimeout(() => els.toast.classList.remove('show'), 2500);
+    }
+
+    // --- Init ---
+    els.btnGen.addEventListener('click', generate);
+    els.out.addEventListener('click', () => copyToClipboard());
+    els.lenRange.addEventListener('input', (e) => { els.lenVal.textContent = e.target.value; generate(); });
+    els.btnExport.addEventListener('click', exportHistory);
+    
+    document.querySelectorAll('input[type="checkbox"]').forEach(box => {
+      box.addEventListener('change', generate);
+    });
+
+    // Theme Logic
+    let isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    function updateTheme() {
+      document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      els.themeBtn.innerHTML = isDark 
+        ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>'
+        : '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+    }
+    els.themeBtn.addEventListener('click', () => { isDark = !isDark; updateTheme(); });
+    updateTheme();
+    generate(); // Start
   </script>
 </body>
 </html>
