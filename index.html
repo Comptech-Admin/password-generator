@@ -278,7 +278,7 @@
     };
 
     let historyData = [];
-    let clipboardClearTimeoutId;
+    let clipboardClearTimeoutId = null;
 
     // --- DOM Elements ---
     const els = {
@@ -356,18 +356,32 @@
     // --- Features ---
 
     // 1. Smart Clipboard
+    function getClipboardErrorMessage(error) {
+      if (error && error.name === 'NotAllowedError') return 'Clipboard permission denied';
+      return 'Clipboard operation failed';
+    }
+
     function copyToClipboard(text) {
-      if(!text) text = els.out.textContent;
-      navigator.clipboard.writeText(text).then(() => {
+      const value = text || els.out.textContent;
+
+      if (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') {
+        showToast('Clipboard operation failed');
+        return;
+      }
+
+      navigator.clipboard.writeText(value).then(() => {
         showToast('Copied! Clipboard clears in 60s');
+
         if (clipboardClearTimeoutId) clearTimeout(clipboardClearTimeoutId);
         clipboardClearTimeoutId = setTimeout(() => {
-          navigator.clipboard.writeText(' ').catch(() => {
-            showToast('Clipboard permission denied');
+          navigator.clipboard.writeText(' ').catch((error) => {
+            showToast(getClipboardErrorMessage(error));
+          }).finally(() => {
+            clipboardClearTimeoutId = null;
           });
         }, 60000);
-      }).catch(() => {
-        showToast('Clipboard permission denied');
+      }).catch((error) => {
+        showToast(getClipboardErrorMessage(error));
       });
     }
 
