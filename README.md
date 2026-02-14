@@ -32,7 +32,7 @@ Creating 10 accounts at once?
 ### 3. 🛡️ Smart Clipboard
 Prevent accidental leaks.
 * When you click "Copy", the tool grabs the password.
-* **Auto-Wipe:** After **60 seconds**, the clipboard is automatically cleared (replaced with a blank space) to ensure you don't accidentally paste a password into a chat window later.
+* **Best-Effort Auto-Wipe:** After **60 seconds**, Omega attempts to clear the clipboard (replace with a blank space) in supported browsers. Clipboard behavior still depends on each browser's permissions and security policies.
 
 ### 4. 🚫 Zero Ambiguity
 We strictly exclude characters that cause confusion in sans-serif fonts:
