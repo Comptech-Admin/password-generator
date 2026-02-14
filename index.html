@@ -394,10 +394,12 @@
       
       // Rows
       historyData.forEach(row => {
+        // Keep only time in CSV to avoid locale date commas creating an extra column in spreadsheet apps
+        const timeOnly = (row.timestamp.split(',')[1] || row.timestamp).trim();
         // Escape quotes inside passwords by doubling them: " -> ""
         let safePass = row.pass.replace(/"/g, '""');
-        // Wrap password in quotes to handle commas/newlines/hashes
-        csvContent += `${row.timestamp},"${safePass}"\n`;
+        // Quote fields to preserve CSV structure
+        csvContent += `"${timeOnly}","${safePass}"\n`;
       });
 
       // Create a Blob (Binary Large Object)
