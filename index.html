@@ -278,6 +278,7 @@
     };
 
     let historyData = [];
+    let clipboardClearTimeoutId;
 
     // --- DOM Elements ---
     const els = {
@@ -359,9 +360,14 @@
       if(!text) text = els.out.textContent;
       navigator.clipboard.writeText(text).then(() => {
         showToast('Copied! Clipboard clears in 60s');
-        setTimeout(() => {
-          navigator.clipboard.writeText(' ');
+        if (clipboardClearTimeoutId) clearTimeout(clipboardClearTimeoutId);
+        clipboardClearTimeoutId = setTimeout(() => {
+          navigator.clipboard.writeText(' ').catch(() => {
+            showToast('Clipboard permission denied');
+          });
         }, 60000);
+      }).catch(() => {
+        showToast('Clipboard permission denied');
       });
     }
 
